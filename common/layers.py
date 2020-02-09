@@ -1,5 +1,5 @@
 # coding: utf-8
-from common.np import *  # import numpy as np
+from common.np import np  # import numpy as np
 from common.config import GPU
 from common.functions import softmax, cross_entropy_error
 
@@ -37,7 +37,7 @@ class Affine:
         return out
 
     def backward(self, dout):
-        W, b = self.params
+        W, _ = self.params
         dx = np.dot(dout, W.T)
         dW = np.dot(self.x.T, dout)
         db = np.sum(dout, axis=0)

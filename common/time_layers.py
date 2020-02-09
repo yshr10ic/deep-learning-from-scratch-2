@@ -1,7 +1,7 @@
 # coding: utf-8
-from common.np import *  # import numpy as np (or import cupy as np)
-from common.layers import *
-from common.functions import sigmoid
+from common.np import np  # import numpy as np (or import cupy as np)
+from common.layers import Affine, Embedding, SoftmaxWithLoss, SigmoidWithLoss
+from common.functions import sigmoid, softmax
 
 
 class RNN:
@@ -19,7 +19,7 @@ class RNN:
         return h_next
 
     def backward(self, dh_next):
-        Wx, Wh, b = self.params
+        Wx, Wh, _ = self.params
         x, h_prev, h_next = self.cache
 
         dt = dh_next * (1 - h_next ** 2)
@@ -46,9 +46,9 @@ class TimeRNN:
         self.stateful = stateful
 
     def forward(self, xs):
-        Wx, Wh, b = self.params
-        N, T, D = xs.shape
-        D, H = Wx.shape
+        Wx, _, _ = self.params
+        N, T, _ = xs.shape
+        _, H = Wx.shape
 
         self.layers = []
         hs = np.empty((N, T, H), dtype='f')
@@ -65,9 +65,9 @@ class TimeRNN:
         return hs
 
     def backward(self, dhs):
-        Wx, Wh, b = self.params
-        N, T, H = dhs.shape
-        D, H = Wx.shape
+        Wx, _, _ = self.params
+        N, T, _ = dhs.shape
+        D, _ = Wx.shape
 
         dxs = np.empty((N, T, D), dtype='f')
         dh = 0
@@ -109,7 +109,7 @@ class LSTM:
 
     def forward(self, x, h_prev, c_prev):
         Wx, Wh, b = self.params
-        N, H = h_prev.shape
+        _, H = h_prev.shape
 
         A = np.dot(x, Wx) + np.dot(h_prev, Wh) + b
 
@@ -130,7 +130,7 @@ class LSTM:
         return h_next, c_next
 
     def backward(self, dh_next, dc_next):
-        Wx, Wh, b = self.params
+        Wx, Wh, _ = self.params
         x, h_prev, c_prev, i, f, g, o, c_next = self.cache
 
         tanh_c_next = np.tanh(c_next)
@@ -176,8 +176,8 @@ class TimeLSTM:
         self.stateful = stateful
 
     def forward(self, xs):
-        Wx, Wh, b = self.params
-        N, T, D = xs.shape
+        _, Wh, _ = self.params
+        N, T, _ = xs.shape
         H = Wh.shape[0]
 
         self.layers = []
@@ -198,8 +198,8 @@ class TimeLSTM:
         return hs
 
     def backward(self, dhs):
-        Wx, Wh, b = self.params
-        N, T, H = dhs.shape
+        Wx, _, _ = self.params
+        N, T, _ = dhs.shape
         D = Wx.shape[0]
 
         dxs = np.empty((N, T, D), dtype='f')
@@ -234,7 +234,7 @@ class TimeEmbedding:
 
     def forward(self, xs):
         N, T = xs.shape
-        V, D = self.W.shape
+        _, D = self.W.shape
 
         out = np.empty((N, T, D), dtype='f')
         self.layers = []
@@ -247,7 +247,7 @@ class TimeEmbedding:
         return out
 
     def backward(self, dout):
-        N, T, D = dout.shape
+        _, T, _ = dout.shape
 
         grad = 0
         for t in range(T):
@@ -266,7 +266,7 @@ class TimeAffine:
         self.x = None
 
     def forward(self, x):
-        N, T, D = x.shape
+        N, T, _ = x.shape
         W, b = self.params
 
         rx = x.reshape(N*T, -1)
@@ -276,8 +276,8 @@ class TimeAffine:
 
     def backward(self, dout):
         x = self.x
-        N, T, D = x.shape
-        W, b = self.params
+        N, T, _ = x.shape
+        W, _ = self.params
 
         dout = dout.reshape(N*T, -1)
         rx = x.reshape(N*T, -1)
@@ -404,7 +404,7 @@ class TimeSigmoidWithLoss:
         self.layers = None
 
     def forward(self, xs, ts):
-        N, T = xs.shape
+        _, T = xs.shape
         self.xs_shape = xs.shape
 
         self.layers = []
@@ -418,7 +418,7 @@ class TimeSigmoidWithLoss:
         return loss / T
 
     def backward(self, dout=1):
-        N, T = self.xs_shape
+        _, T = self.xs_shape
         dxs = np.empty(self.xs_shape, dtype='f')
 
         dout *= 1/T
@@ -443,7 +443,7 @@ class GRU:
         self.cache = None
 
     def forward(self, x, h_prev):
-        H, H3 = self.Wh.shape
+        H, _ = self.Wh.shape
         Wxz, Wxr, Wx = self.Wx[:, :H], self.Wx[:, H:2 * H], self.Wx[:, 2 * H:]
         Whz, Whr, Wh = self.Wh[:, :H], self.Wh[:, H:2 * H], self.Wh[:, 2 * H:]
 
@@ -457,7 +457,7 @@ class GRU:
         return h_next
 
     def backward(self, dh_next):
-        H, H3 = self.Wh.shape
+        H, _ = self.Wh.shape
         Wxz, Wxr, Wx = self.Wx[:, :H], self.Wx[:, H:2 * H], self.Wx[:, 2 * H:]
         Whz, Whr, Wh = self.Wh[:, :H], self.Wh[:, H:2 * H], self.Wh[:, 2 * H:]
         x, h_prev, z, r, h_hat = self.cache
@@ -498,14 +498,14 @@ class GRU:
 class TimeGRU:
     def __init__(self, Wx, Wh, stateful=False):
         self.Wx, self.Wh = Wx, Wh
-        selfdWx, self.dWh = None, None
+        _, self.dWh = None, None
         self.layers = None
         self.h, self.dh = None, None
         self.stateful = stateful
 
     def forward(self, xs):
-        N, T, D = xs.shape
-        H, H3 = self.Wh.shape
+        N, T, _ = xs.shape
+        H, _ = self.Wh.shape
 
         self.layers = []
         hs = np.empty((N, T, H), dtype='f')
@@ -522,7 +522,7 @@ class TimeGRU:
         return hs
 
     def backward(self, dhs):
-        N, T, H = dhs.shape
+        N, T, _ = dhs.shape
         D = self.Wx.shape[0]
 
         dxs = np.empty((N, T, D), dtype='f')
@@ -553,7 +553,7 @@ class Simple_TimeSoftmaxWithLoss:
         self.cache = None
 
     def forward(self, xs, ts):
-        N, T, V = xs.shape
+        _, T, _ = xs.shape
         layers = []
         loss = 0
 
@@ -568,7 +568,7 @@ class Simple_TimeSoftmaxWithLoss:
 
     def backward(self, dout=1):
         layers, xs = self.cache
-        N, T, V = xs.shape
+        _, T, _ = xs.shape
         dxs = np.empty(xs.shape, dtype='f')
 
         dout *= 1/T
@@ -586,8 +586,8 @@ class Simple_TimeAffine:
         self.layers = None
 
     def forward(self, xs):
-        N, T, D = xs.shape
-        D, M = self.W.shape
+        N, T, _ = xs.shape
+        _, M = self.W.shape
 
         self.layers = []
         out = np.empty((N, T, M), dtype='f')
@@ -599,8 +599,8 @@ class Simple_TimeAffine:
         return out
 
     def backward(self, dout):
-        N, T, M = dout.shape
-        D, M = self.W.shape
+        N, T, _ = dout.shape
+        D, _ = self.W.shape
 
         dxs = np.empty((N, T, D), dtype='f')
         self.dW, self.db = 0, 0

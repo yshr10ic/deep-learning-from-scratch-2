@@ -2,7 +2,7 @@
 import sys
 sys.path.append('..')
 import numpy as np
-from common.time_layers import *
+from common.time_layers import TimeEmbedding, TimeRNN, TimeAffine, TimeSoftmaxWithLoss
 
 
 class SimpleRnnlm:

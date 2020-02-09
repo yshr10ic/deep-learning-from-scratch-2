@@ -4,7 +4,7 @@ sys.path.append('..')
 import numpy
 import time
 import matplotlib.pyplot as plt
-from common.np import *  # import numpy as np
+from common.np import np  # import numpy as np
 from common.util import clip_grads
 
 
@@ -25,7 +25,7 @@ class Trainer:
         loss_count = 0
 
         start_time = time.time()
-        for epoch in range(max_epoch):
+        for _ in range(max_epoch):
             # シャッフル
             idx = numpy.random.permutation(numpy.arange(data_size))
             x = x[idx]
@@ -102,7 +102,7 @@ class RnnlmTrainer:
         loss_count = 0
 
         start_time = time.time()
-        for epoch in range(max_epoch):
+        for _ in range(max_epoch):
             for iters in range(max_iters):
                 batch_x, batch_t = self.get_batch(xs, ts, batch_size, time_size)
 
