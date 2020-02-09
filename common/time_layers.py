@@ -99,7 +99,7 @@ class LSTM:
 
         Parameters
         ----------
-        Wx: 入力`x`用の重みパラーメタ（4つ分の重みをまとめる）
+        Wx: 入力`x`用の重みパラメータ（4つ分の重みをまとめる）
         Wh: 隠れ状態`h`用の重みパラメータ（4つ分の重みをまとめる）
         b: バイアス（4つ分のバイアスをまとめる）
         '''
@@ -233,8 +233,8 @@ class TimeEmbedding:
         self.W = W
 
     def forward(self, xs):
-        N, T = xs.shape
-        _, D = self.W.shape
+        N, T = xs.shape # バッチサイズ、T個の時系列データ
+        _, D = self.W.shape # vocab_size, wordvec_size
 
         out = np.empty((N, T, D), dtype='f')
         self.layers = []
