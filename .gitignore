@@ -1,0 +1,9 @@
+__pycache__/
+ch06/BetterRnnlm.pkl
+dataset/ptb.test.npy
+dataset/ptb.test.txt
+dataset/ptb.train.npy
+dataset/ptb.train.txt
+dataset/ptb.valid.npy
+dataset/ptb.valid.txt
+dataset/ptb.vocab.pkl
